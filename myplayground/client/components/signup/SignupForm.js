@@ -3,6 +3,8 @@ import timezones from '../../data/timezones';
 import _ from 'lodash';
 import classnames from 'classnames';
 //import axios from 'axios';
+import validateInput from '../../../server/shared/validations/signup';
+import TextFieldGroup from '../common/TextFieldGroup';
 
 
 
@@ -17,26 +19,69 @@ class SignupForm extends React.Component {
       passwordConfirmation: '',
       timezone: '',
       errors: {},
-      isLoading: false
+      isLoading: false,
+      invalid: false
+
     }
 
     this.onChange = this.onChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
+    this.checkUserExists = this.checkUserExists.bind(this);
   }
 
   onChange(e) {
     this.setState({ [e.target.name]: e.target.value });
   }
 
+  isValid() {
+    const { errors, isValid } = validateInput(this.state);
+
+    if(!isValid) {
+      this.setState({ errors });
+    }
+
+    return isValid;
+  }
+
+  checkUserExists(e) {
+    const field = e.target.name;
+    const val = e.target.value;
+
+    if(val !== '') {
+      this.props.isUserExists(val).then(res => {
+        let errors = this.state.errors;
+        let invalid;
+        if(res.data.user) {
+          errors[field] = 'There is user with such ' + field;
+          invalid = true;
+        } else {
+          errors[field] = '';
+          invalid = false;
+        }
+        this.setState({ errors, invalid });
+      });
+    }
+  }
+
   onSubmit(e) {
     e.preventDefault();
-    this.setState({ errors: {}, isLoading: true }); // init errors before call userSignupRequest
 
-    //console.log(this.state);
-    //axios.post('/api/users', { user: this.state });
-    this.props.userSignupRequest(this.state)
-      .then(() => {})
-      .catch(err => this.setState({ errors: err.response.data, isLoading: false }));
+    if(this.isValid()) {
+      this.setState({ errors: {}, isLoading: true }); // init errors before call userSignupRequest
+
+      //console.log(this.state);
+      //axios.post('/api/users', { user: this.state });
+      this.props.userSignupRequest(this.state)
+        .then(() => {
+          this.props.addFlashMessage({
+            type: 'success',
+            text: 'You signed up successfully. Welcome!'
+          });
+          this.context.router.history.push('/');
+        },
+        (err) => this.setState({ errors: err.response.data, isLoading: false }));
+
+    }
   }
 
   render() {
@@ -48,51 +93,40 @@ class SignupForm extends React.Component {
     return(
       <form onSubmit={this.onSubmit}>
         <h1>Join our community</h1>
-        <div className={classnames("form-group", {'has-error': errors.username })}>
-          <label className="control-label">Username</label>
-            <input
-              value={this.state.username}
-              onChange={this.onChange}
-              type="text"
-              name="username"
-              className="form-control"
-            />
-            {errors.username && <span className="help-block">{errors.username}</span>}
 
-        </div>
-        <div className={classnames("form-group", {'has-error': errors.email })}>
-          <label className="control-label">Email</label>
-            <input
-              value={this.state.email}
-              onChange={this.onChange}
-              type="text"
-              name="email"
-              className="form-control"
-            />
-            {errors.email && <span className="help-block">{errors.email}</span>}
-        </div>
-        <div className={classnames("form-group", {'has-error': errors.password })}>
-          <label className="control-label">Password</label>
-            <input
-              value={this.state.password}
-              onChange={this.onChange}
-              type="password"
-              name="password"
-              className="form-control"
-            />
-            {errors.password && <span className="help-block">{errors.password}</span>}
-        </div>
-        <div className={classnames("form-group", {'has-error': errors.passwordConfirmation })}>
-          <label className="control-label">Password Confirmation</label>
-            <input
-              value={this.state.passwordConfirmation}
-              onChange={this.onChange}
-              type="password"
-              name="passwordConfirmation"
-              className="form-control"
-            />
-            {errors.passwordConfirmation && <span className="help-block">{errors.passwordConfirmation}</span>}
-        </div>
+        <TextFieldGroup
+          error={errors.username}
+          label="Username"
+          onChange={this.onChange}
+          checkUserExists={this.checkUserExists}
+          value={this.state.username}
+          field="username"
+        />
+        <TextFieldGroup
+          error={errors.email}
+          label="Email"
+          onChange={this.onChange}
+          checkUserExists={this.checkUserExists}
+          value={this.state.email}
+          field="email"
+        />
+        <TextFieldGroup
+          error={errors.password}
+          label="Password"
+          onChange={this.onChange}
+          value={this.state.password}
+          field="password"
+          type="password"
+        />
+        <TextFieldGroup
+          error={errors.passwordConfirmation}
+          label="Password Confirmation"
+          onChange={this.onChange}
+          value={this.state.passwordConfirmation}
+          field="passwordConfirmation"
+          type="password"
+        />
+
         <div className={classnames("form-group", {'has-error': errors.timezone })}>
           <label className="control-label">Timezone</label>
             <select
@@ -107,7 +141,7 @@ class SignupForm extends React.Component {
             {errors.timezone && <span className="help-block">{errors.timezone}</span>}
         </div>
         <div className="form-group">
-          <button disabled={this.state.isLoading} className="btn btn-primary btn-lg">
+          <button disabled={this.state.isLoading || this.state.invalid} className="btn btn-primary btn-lg">
             Sign up
           </button>
         </div>
@@ -117,7 +151,13 @@ class SignupForm extends React.Component {
 }
 
 SignupForm.propTypes = {
-  userSignupRequest: React.PropTypes.func.isRequired
+  userSignupRequest: React.PropTypes.func.isRequired,
+  addFlashMessage: React.PropTypes.func.isRequired,
+  isUserExists: React.PropTypes.func.isRequired
+}
+
+SignupForm.contextTypes = {
+  router: React.PropTypes.object.isRequired
 }
 
 export default SignupForm;
