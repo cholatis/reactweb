@@ -27,6 +27,7 @@
     "jwt-decode": "^2.2.0",
     "knex": "^0.13.0",
     "lodash": "^4.17.4",
+    "mssql": "^3.3.0",
     "mysql2": "^1.4.1",
     "shortid": "^2.2.8",
     "validator": "^8.0.0"

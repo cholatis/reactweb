@@ -16,6 +16,8 @@ import Greetings from './components/Greetings';
 import SignupPage from './components/signup/SignupPage';
 import LoginPage from './components/login/LoginPage';
 import NewEventPage from './components/events/NewEventPage';
+import GamesPage from './components/games/GamesPage';
+import GamesForm from './components/games/GamesForm';
 
 import requireAuth from './utils/requireAuth';
 
@@ -41,6 +43,9 @@ render((
         <Route path="/signup" component={SignupPage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/new-event" component={requireAuth(NewEventPage)} />
+        <Route path="/games" component={requireAuth(GamesPage)} />
+        <Route path="/gamesform" component={requireAuth(GamesForm)} />
+        <Route path="/game/:id" component={requireAuth(GamesForm)} />
       </div>
     </Router>
   </Provider>

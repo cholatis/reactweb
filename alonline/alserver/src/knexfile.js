@@ -3,11 +3,11 @@
 module.exports = {
 
   development: {
-    client: 'mysql2',
+    client: 'mssql',
     connection: {
-      host:     '52.187.116.142',
+      server:     '52.187.116.142',
       database: 'test',
-      user:     'mysqlex',
+      user:     'mssqlex',
       password: 'GECdotnet123!'
     },
     pool: {
